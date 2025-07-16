@@ -11,15 +11,10 @@ dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
 
 
 # Create ChArUco board
-# board = aruco.CharucoBoard_create(
-#     squares_x, squares_y, square_length, marker_length, dictionary
-# )
-
 board = cv2.aruco.CharucoBoard((squares_x, squares_y), square_length, marker_length, dictionary)
-print(type(board))
+
 # Draw the board to an image
 img = board.generateImage((squares_x * square_length, squares_y * square_length))
-# img = board.draw((squares_x * square_length, squares_y * square_length))
 
 # Save as image
 cv2.imwrite(f"charuco_board.png", img)
