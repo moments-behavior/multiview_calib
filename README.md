@@ -12,7 +12,7 @@ git clone https://github.com/JohnsonLabJanelia/multiview_calib.git
 
 Inside the cloned folder `multiview_calib`, use [uv](https://docs.astral.sh/uv/getting-started/) to manage virtual environment, to create a uv environment  
 ```
-uv venv
+uv venv --python=python3.9 
 ```
 Active the virtual environment
 ```
