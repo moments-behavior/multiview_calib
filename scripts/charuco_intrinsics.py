@@ -222,12 +222,14 @@ def get_charuco_intrinsics(
     all_corners, all_ids, imsize, objpoints, imgpoints, all_im_ids = read_chessboards(
         images, board, aruco_dict, number_of_markers, verbose
     )
+    
     print(
         "==> Camera: {}, number of valid images {} in {} total images.".format(
             cam_name, len(all_im_ids), len(images)
         )
     )
     landmark = {}
+    
     for i, im_id in enumerate(all_im_ids):
         landmark[im_id] = {
             "corners": all_corners[i],
@@ -237,7 +239,8 @@ def get_charuco_intrinsics(
     with open(output_path + "/landmarks_{}.pkl".format(cam_name), "wb") as f:
         pickle.dump(landmark, f)
 
-    if not verbose:
+    if not verbose:       
+
 
         if len(all_im_ids) > 0:
             (
@@ -271,6 +274,7 @@ def get_charuco_intrinsics(
                     cam_name, ret, reproj_error
                 )
             )
+            
 
             alpha = 0.95
             newcameramtx, roi = cv.getOptimalNewCameraMatrix(
@@ -286,9 +290,15 @@ def get_charuco_intrinsics(
                         cam_name, alpha
                     )
                 )
+                
+            output_file = os.path.join(output_path, "{}.yaml".format(cam_name))            
+            utils.save_intrinsics_yaml(output_file, imsize[1], imsize[0], mtx, dist)            
+            logging.info(
+                "Saving intrinsics for camera {} to {}".format(cam_name, output_file)
+            )
 
             frame = cv.imread(images[0])
-            plt.figure()
+            plt.figure(9,6)
             plt.imshow(cv.undistort(frame, mtx, dist, None, newcameramtx))
             grid = (
                 grid_norm * newcameramtx[[0, 1], [0, 1]][None]
@@ -309,16 +319,27 @@ def get_charuco_intrinsics(
                 markersize=1.5,
             )
             plt.legend()
-            plt.grid()
+            plt.grid()          
+            plt.show()
+            
+            
             plt.savefig(
                 os.path.join(output_path, "monotonicity_{}.jpg".format(cam_name)),
                 bbox_inches="tight",
             )
             plt.close()
 
-            output_file = os.path.join(output_path, "{}.yaml".format(cam_name))
-            utils.save_intrinsics_yaml(output_file, imsize[1], imsize[0], mtx, dist)
+            
             return mtx, dist, newcameramtx
+        
+        else:
+            
+            logging.warning(
+                "No valid images found for camera {}. Skipping calibration.".format(
+                    cam_name
+                )
+            )
+            return None, None, None
 
 
 parser = argparse.ArgumentParser()
@@ -362,7 +383,7 @@ if if_serial:
             cam, images_all_cams[idx], charuco_setup, output_path, True
         )
 else:
-    num_workers=17
+    num_workers=16
     # parallel the process
     with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
         partial_func = partial(
