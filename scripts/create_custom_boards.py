@@ -5,8 +5,8 @@ import cv2.aruco as aruco
 # Parameters
 squares_x = 5   # number of squares along X
 squares_y = 5   # number of squares along Y
-square_length = 60  # in mm (or any consistent unit)
-marker_length = 45  # marker side length
+square_length = 50  # in mm (or any consistent unit)
+marker_length = 40  # marker side length
 dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
 
 
@@ -26,5 +26,5 @@ plt.figure(figsize=(8.5, 11))  # A4 size page
 plt.axis('off')
 plt.imshow(img, cmap='gray')
 
-plt.savefig(f"charuco_board_{squares_x}x{squares_y}.pdf", bbox_inches='tight', pad_inches=0, dpi=2400)
-plt.savefig(f"charuco_board_{squares_x}x{squares_y}.svg", bbox_inches='tight', pad_inches=0, dpi=2400)
+plt.savefig(f"charuco_board_{squares_x}x{squares_y}_{square_length}_{marker_length}.pdf", bbox_inches='tight', pad_inches=0, dpi=2400)
+plt.savefig(f"charuco_board_{squares_x}x{squares_y}_{square_length}_{marker_length}.svg", bbox_inches='tight', pad_inches=0, dpi=2400)
