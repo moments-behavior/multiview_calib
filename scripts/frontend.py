@@ -1,13 +1,11 @@
-
-import tkinter as tk
-import tkinter.font as tkfont
-from tkinter import filedialog, scrolledtext
+import streamlit as st
 import subprocess
-import threading
 import os
+import tempfile
+import time
 
 # --- Configuration ---
-scripts = [
+SCRIPTS = [
     ("1. charuco_intrinsics", "charuco_intrinsics.py"),
     ("2. format_for_calibration", "format_for_calibration.py"),
     ("3. compute_relative_poses", "compute_relative_poses.py"),
@@ -17,110 +15,115 @@ scripts = [
     ("7. visualize", "visualize.py"),
 ]
 
-#default_config_dir = os.path.join(os.path.dirname(__file__), "configs")
-default_config_dir = "/nfs/exports/ratlv/calibration"
+# --- Streamlit App Layout ---
 
-# --- GUI Functions ---
-def log(message):
-    log_widget.insert(tk.END, message + "\n")
-    log_widget.see(tk.END)
+st.set_page_config(page_title="Multiview Calib", layout="wide")
+st.title("Multiview Calibration Runner")
 
-def browse_config():
-    path = filedialog.askopenfilename(
-        title="Select Config File",
-        initialdir=default_config_dir
+# Initialize session state to hold our data
+if 'log_output' not in st.session_state:
+    st.session_state.log_output = ""
+if 'script_selections' not in st.session_state:
+    # Default to the first script being selected
+    st.session_state.script_selections = {script[1]: (i == 0) for i, script in enumerate(SCRIPTS)}
+
+# --- Helper Function to Run Scripts ---
+def run_script(script_path, config_path, log_placeholder):
+    """Runs a single script and streams its output to the placeholder."""
+    st.session_state.log_output += f"▶️ Running {os.path.basename(script_path)}...\n"
+    log_placeholder.code(st.session_state.log_output, language='log')
+
+    try:
+        process = subprocess.Popen(
+            ["python", "-u", script_path, "-c", config_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+            universal_newlines=True
+        )
+
+        # Stream output line by line
+        for line in iter(process.stdout.readline, ''):
+            st.session_state.log_output += line
+            log_placeholder.code(st.session_state.log_output, language='log')
+        
+        process.wait() # Wait for the process to finish
+
+        if process.returncode == 0:
+            st.session_state.log_output += f"✅ {os.path.basename(script_path)} completed successfully.\n\n"
+            log_placeholder.code(st.session_state.log_output, language='log')
+            return True
+        else:
+            st.session_state.log_output += f"❌ {os.path.basename(script_path)} failed with exit code {process.returncode}.\n\n"
+            log_placeholder.code(st.session_state.log_output, language='log')
+            return False
+
+    except Exception as e:
+        st.session_state.log_output += f"🔥 An error occurred while running {os.path.basename(script_path)}: {e}\n\n"
+        log_placeholder.code(st.session_state.log_output, language='log')
+        return False
+
+# --- UI Components ---
+
+# Create two columns for controls and logs
+col1, col2 = st.columns([1, 2])
+
+with col1:
+    # st.header("Controls")
+
+    # 1. Ask for the experiment directory path
+    st.subheader("1. Select Experiment Folder")
+    default_path = "/home/ro/exp/calib/2025_08_25_v2/"
+    config_dir = st.text_input(
+        "Enter the absolute path to the folder containing 'config/config.json'",
+        default_path
     )
-    if path:
-        config_var.set(path)
 
-def check_success(script_name):
-    # Example: look for a .success file after script runs
-    # Replace this with your real validation logic
-    success_marker = f"{script_name}.success"
-    return os.path.exists(success_marker)
+    config_path = os.path.join(config_dir,"config", "config.json")
 
-def run_selected_scripts(config_path, selections):
-    script_items = list(scripts)
-    for i, (label, script) in enumerate(script_items):
-        if not selections[script].get():
-            continue
-
-        log(f"Running {label} ({script}) with: -c {config_path}")
-        try:
-            process = subprocess.Popen(
-                ["python", "-u", script, "-c", config_path],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True
-            )
-
-            while True:
-                line = process.stdout.readline()
-                if not line and process.poll() is not None:
-                    break
-                if line:
-                    log(line.strip())
-
-            exit_code = process.poll()
-            if exit_code != 0:
-                log(f"{label} failed with exit code {exit_code}. Stopping.")
-                return
-
-            # if not check_success(script):
-            #     log(f"⚠️ {label} did not produce expected output. Stopping.")
-            #     return
-
-            log(f"{label} completed successfully.\n")
-
-            # Move selection to the next script
-            selections[script].set(False)
-            if i + 1 < len(script_items):
-                next_script = script_items[i + 1][1]
-                selections[next_script].set(True)
-
-            return  # Stop after one script to allow step-by-step flow
-
-        except Exception as e:
-            log(f"Error running {label}: {e}")
-            return
-
-    log("No more scripts selected.")
+    if not os.path.exists(config_path):
+        st.error(f"Error: 'config.json' not found in the specified directory: {config_dir}")
+        st.stop()
+    else:
+        st.success(f"✅ Found config file: {config_path}")
 
 
-def start_run():
-    config_path = config_var.get()
-    if not config_path:
-        log("Please select a config file first.")
-        return
-    log("Starting script sequence...\n")
-    threading.Thread(target=run_selected_scripts, args=(config_path, selections), daemon=True).start()
+    # 2. Script Selection
+    st.subheader("2. Select Scripts to Run")
+    for label, script_file in SCRIPTS:
+        st.session_state.script_selections[script_file] = st.checkbox(
+            label, value=st.session_state.script_selections[script_file], key=script_file
+        )
 
-# --- GUI Layout ---
-root = tk.Tk()
-root.title("Multiview calib")
+    # 3. Run Button
+    run_button = st.button("🚀 Run Selected Scripts", type="primary", use_container_width=True)
 
-# Fonts
-ui_font = tkfont.Font(family="Segoe UI", size=11)
-log_font = tkfont.Font(family="Courier New", size=10)
-root.option_add("*Font", ui_font)
+with col2:
+    st.header("Live Log Output")
+    log_placeholder = st.empty()
+    log_placeholder.code(st.session_state.log_output or "Logs will appear here...", language='log')
 
-config_var = tk.StringVar()
-selections = {}
 
-tk.Label(root, text="Config File:").pack(pady=(10, 0))
-tk.Entry(root, textvariable=config_var, width=60).pack(padx=10)
-tk.Button(root, text="Browse", command=browse_config).pack(pady=5)
-
-tk.Label(root, text="Select Scripts to Run:").pack(pady=(10, 0))
-for i, (label, script) in enumerate(scripts):
-    default_checked = (i == 0)  # Only Script 1 is checked
-    var = tk.BooleanVar(value=default_checked)
-    selections[script] = var
-    tk.Checkbutton(root, text=label, variable=var).pack(anchor='w', padx=20)
-
-tk.Button(root, text="Run Selected Scripts", command=start_run).pack(pady=10)
-
-log_widget = scrolledtext.ScrolledText(root, width=100, height=25)
-log_widget.pack(padx=10, pady=10)
-
-root.mainloop()
+# --- Main Logic ---
+if run_button:
+    if not config_dir or not os.path.exists(config_path):
+        st.warning("Please provide a valid directory containing a config.json file.")
+    else:
+        # Clear previous logs
+        st.session_state.log_output = ""
+        
+        st.session_state.log_output += f"Using config file: {config_path}\n\n"
+        
+        # Run scripts sequentially
+        for label, script_file in SCRIPTS:
+            if st.session_state.script_selections.get(script_file):
+                # Pass the direct config_path, no temp file needed
+                success = run_script(script_file, config_path, log_placeholder)
+                if not success:
+                    st.error(f"Execution stopped due to failure in {label}.")
+                    break # Stop on failure
+        
+        st.session_state.log_output += "\n✨ All selected scripts have been processed."
+        log_placeholder.code(st.session_state.log_output, language='log')
+        st.toast("Run complete!")
