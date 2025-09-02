@@ -138,10 +138,14 @@ def calibrate_camera(board, all_corners, all_ids, imsize, cam_name):
     #     + cv.CALIB_RATIONAL_MODEL
     # )
 
-    if cam_name == "710038":
-        focal_length_init = 1780
+    if cam_name == "2005325":
+        focal_length_init = 2750
+    elif cam_name in ["2006054", "2002486","2006055","2008666","2008670","2006052"]:
+        focal_length_init = 3950
+    elif cam_name == "2008669":
+        focal_length_init = 2500    
     else:
-        focal_length_init = 2300
+        focal_length_init = 3050
 
     cameraMatrixInit = np.array(
         [
@@ -238,9 +242,13 @@ def get_charuco_intrinsics(
         }
     with open(output_path + "/landmarks_{}.pkl".format(cam_name), "wb") as f:
         pickle.dump(landmark, f)
+      
+    import pdb
+    print("now save images")
 
     if not verbose:       
 
+        
 
         if len(all_im_ids) > 0:
             (
@@ -297,8 +305,13 @@ def get_charuco_intrinsics(
                 "Saving intrinsics for camera {} to {}".format(cam_name, output_file)
             )
 
+            
+            
+            # save figure
+            # pdb.set_trace()            
+
             frame = cv.imread(images[0])
-            plt.figure(9,6)
+            plt.figure(figsize=(9,6))
             plt.imshow(cv.undistort(frame, mtx, dist, None, newcameramtx))
             grid = (
                 grid_norm * newcameramtx[[0, 1], [0, 1]][None]
