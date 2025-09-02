@@ -605,10 +605,21 @@ def global_registration(ba_poses, ba_points, landmarks_global):
         landmarks_global["ids"],
     )
 
+    # logging.info("src shape:{}".format(src.shape))
+    # logging.info("dst shape:{}".format(dst.shape))
+    
+    # print(src)
+    
+    # for i in range(len(src)-1):
+    #     print(f"{src[i] - src[i+1]}, norm = {np.linalg.norm(src[i]-src[i+1])}")
+    # print(dst)
+
     logging.info("src points: bundle adjustment optimized 3d points")
     logging.info("dst points: global coordinates")
 
     scale, R, t, mean_dist = point_set_registration(src, dst, verbose=True)
+    
+    print(f"scale: {scale}, R: {R}, t: {t}, mean_dist: {mean_dist}")
 
     global_triang_points = {
         "points_3d": apply_rigid_transform(

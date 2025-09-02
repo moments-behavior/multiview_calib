@@ -28,11 +28,12 @@ __all__ = ["build_input", "bundle_adjustment",
 logger = logging.getLogger(__name__)
 stream_to_logger = utils.StreamToLogger(logger, logging.INFO)
 
+                
 def unpack_camera_params(camera_params, rotation_matrix=True):
 
     r = np.float64(camera_params[:3])
     if rotation_matrix:
-        r = cv2.Rodrigues(r)[0]
+        r = cv2.Rodrigues(r)[0]  
     t = np.float64(camera_params[3:6])
     K = np.float64([[camera_params[6],0,camera_params[8]],
                     [0,camera_params[7],camera_params[9]],
