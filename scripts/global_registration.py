@@ -15,6 +15,7 @@ from multiview_calib import utils
 from multiview_calib.extrinsics import (
     global_registration,
     visualise_global_registration,
+    check_square_lengths
 )
 from multiview_calib.bundle_adjustment_scipy import error_measure
 
@@ -32,6 +33,9 @@ def main(
 
     setup = utils.json_read(root_folder + "/output/setup.json")
     ba_poses = utils.json_read(root_folder + "/output/bundle_adjustment/ba_poses.json")
+    
+    config_json = utils.json_read(config)
+    
     ba_points = utils.json_read(
         root_folder + "/output/bundle_adjustment/ba_points.json"
     )
@@ -51,7 +55,10 @@ def main(
             filenames,
             output_path=output_path,
         )
-
+    
+    check_square_lengths(global_triang_points,landmarks_global,config_json["charuco_setup"])
+    
+    
     utils.json_write(os.path.join(output_path, "global_poses.json"), global_poses)
     utils.json_write(
         os.path.join(output_path, "global_triang_points.json"), global_triang_points
@@ -76,6 +83,9 @@ def main(
             median_dist
         )
     )
+
+    # sanity check on extrinsics points
+    
 
     # r_x_c_180 = np.asarray([[1, 0, 0], [0, -1, 0], [0, 0, -1]])
     # r_z_c_90 = np.asarray([[0, -1, 0], [1, 0, 0], [0, 0, 1]])

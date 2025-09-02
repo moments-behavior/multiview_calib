@@ -682,3 +682,25 @@ def visualise_global_registration(
             os.path.join(output_path, "global_registration_{}.jpg".format(view)),
             bbox_inches="tight",
         )
+
+def check_square_lengths(global_triang_points,landmarks_global,charuco_setup):
+    
+    # charuco_config = json_read(charuco_setup)
+    print("Checking square lengths in global triangulated points...")
+    sq_len = []
+    
+    for i in range(charuco_setup["w"]-2):
+        for j in range(charuco_setup["h"]-2):
+            
+            side_h = np.linalg.norm(np.array(global_triang_points["points_3d"][i*(charuco_setup["w"]-1)+j][:]) -np.array(global_triang_points["points_3d"][i*(charuco_setup["w"]-1)+j+1][:]))
+            # side_v = np.linalg.norm(np.array(global_triang_points["points_3d"][i*(charuco_setup["w"]-1)+j][:]) -np.array(global_triang_points["points_3d"][i*(charuco_setup["w"]  )+j][:]))
+            
+            sq_len.append(float(side_h))
+            # sq_len.append(float(side_v))
+            
+           
+    logging.info(f"Square lengths (in the same unit of the input global points):{np.mean(sq_len)} +- {np.std(sq_len)}") 
+    print(sq_len)                     
+        
+    
+    
