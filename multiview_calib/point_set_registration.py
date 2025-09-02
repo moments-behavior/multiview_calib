@@ -53,7 +53,7 @@ def orthogonal_procrustes_modified(A, B, do_reflection=True):
     
     if(np.linalg.det(R) < 0 and do_reflection):
         
-        print("Reflection needed in orthogonal_procrustes_modified")
+        logging.info("Reflection needed in orthogonal_procrustes_modified")
         vt[-1, :] *= -1
         w[-1] *= -1
         R = u @ vt

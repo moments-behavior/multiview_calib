@@ -619,8 +619,10 @@ def global_registration(ba_poses, ba_points, landmarks_global):
 
     scale, R, t, mean_dist = point_set_registration(src, dst, verbose=True)
     
-    print(f"scale: {scale}, R: {R}, t: {t}, mean_dist: {mean_dist}")
-
+    print(f"scale: {scale}")
+    print(f"R: {R}")
+    print(f"t: {t}")
+    
     global_triang_points = {
         "points_3d": apply_rigid_transform(
             np.array(ba_points["points_3d"]), R, t, scale
@@ -700,7 +702,15 @@ def check_square_lengths(global_triang_points,landmarks_global,charuco_setup):
             
            
     logging.info(f"Square lengths (in the same unit of the input global points):{np.mean(sq_len)} +- {np.std(sq_len)}") 
-    print(sq_len)                     
+    
+    if(abs(np.mean(sq_len)-charuco_setup["square_side_length"])>1): # 1mm tolerance
+        print("!"*20)
+        logging.warning(f"The input and estimated square length are quite different -- Something may have gone wrong -- likely scaling!")
+        print("!"*20)
+    else:
+        logging.info(f"The estimated square length {np.mean(sq_len):3.2f} is compatible with the input one ({charuco_setup['square_side_length']})")
+    
+    # print(sq_len)                     
         
     
     
