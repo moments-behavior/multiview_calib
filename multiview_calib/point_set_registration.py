@@ -32,6 +32,40 @@ def estimate_scale_point_sets(src, dst, max_est=50000):
         
     return np.nanmedian(scales), np.nanstd(scales)
 
+
+def orthogonal_procrustes_modified(A, B, do_reflection=True):
+    # this is based on the MATLAB implementation that allows to handle reflections
+    
+    from scipy.linalg import svd
+    
+    A = np.asanyarray(A)
+    B = np.asanyarray(B)
+    
+    if A.ndim != 2:
+        raise ValueError(f'expected ndim to be 2, but observed {A.ndim}')
+    if A.shape != B.shape:
+        raise ValueError(f'the shapes of A and B differ ({A.shape} vs {B.shape})')
+   
+    H = B.T @ A
+    u, w, vt = svd(H)
+    R = u @ vt
+    
+    
+    if(np.linalg.det(R) < 0 and do_reflection):
+        
+        print("Reflection needed in orthogonal_procrustes_modified")
+        vt[-1, :] *= -1
+        w[-1] *= -1
+        R = u @ vt
+        
+    # The scale is the sum of the singular values.
+    scale = w.sum()
+    
+    # The function was missing this return statement.
+    return R, scale
+    
+    scale = w.sum()
+
 def procrustes_registration(src, dst):
     """
     Estimates rotation translation and scale of two point sets
@@ -60,6 +94,7 @@ def procrustes_registration(src, dst):
     P = src.copy()
     Q = dst.copy()
 
+    # center at origin
     m1 = np.mean(P, 0) 
     m2 = np.mean(Q, 0)
 
@@ -75,7 +110,9 @@ def procrustes_registration(src, dst):
     # change scaling of data (in rows) such that trace(mtx*mtx') = 1
     P /= norm1
     Q /= norm2
-    R, s = orthogonal_procrustes(Q, P)
+    
+    # use the matlab implementation that allows to handle reflections    
+    R, s = orthogonal_procrustes_modified(Q, P)   
     
     scale = s*norm2/norm1
     t = m2-np.dot(m1*scale, R.T)
