@@ -19,6 +19,7 @@ gt_pts = config["gt_pts"]
 
 cam_ordered = config["cam_ordered"]
 
+
 def load_yaml_file(yaml_cam_name):
     cam_params = {}
     fs = cv2.FileStorage(yaml_cam_name, cv2.FILE_STORAGE_READ)
@@ -52,12 +53,14 @@ rr.set_time_sequence("stable_time", 0)
 rr.log("world", rr.ViewCoordinates.RIGHT_HAND_Y_UP, static=True)
 for key, value in gt_pts.items():
     rr.log(key, rr.Points3D(value))
-if (len(cam_ordered)==17):
-    rr.log("arena", rr.Boxes3D(centers=[0, 0, -174.6], half_sizes=[914.4, 914.4, 174.6]))
-    rr.log("shelter", rr.Boxes3D(centers=[1014.4, 0, -174.6], half_sizes=[100, 100, 174.6]))
+if (len(cam_ordered) == 17):
+    rr.log("arena", rr.Boxes3D(
+        centers=[0, 0, -174.6], half_sizes=[914.4, 914.4, 174.6]))
+    rr.log("shelter", rr.Boxes3D(
+        centers=[1014.4, 0, -174.6], half_sizes=[100, 100, 174.6]))
 
 for order, serial in enumerate(cam_ordered):
-    ## load yaml file
+    # load yaml file
     yaml_file_name = calibration_dir + "/calibration/Cam{}.yaml".format(serial)
     cam_params = load_yaml_file(yaml_file_name)
 
