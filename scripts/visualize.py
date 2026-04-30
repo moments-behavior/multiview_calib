@@ -49,15 +49,19 @@ blueprint = rrb.Blueprint(
 )
 
 rr.send_blueprint(blueprint)
-rr.set_time_sequence("stable_time", 0)
+rr.set_time(sequence="stable_time", value=0)
 rr.log("world", rr.ViewCoordinates.RIGHT_HAND_Y_UP, static=True)
 for key, value in gt_pts.items():
     rr.log(key, rr.Points3D(value))
-if (len(cam_ordered) == 17):
-    rr.log("arena", rr.Boxes3D(
-        centers=[0, 0, -174.6], half_sizes=[914.4, 914.4, 174.6]))
-    rr.log("shelter", rr.Boxes3D(
-        centers=[1014.4, 0, -174.6], half_sizes=[100, 100, 174.6]))
+if len(cam_ordered) == 17:
+    rr.log(
+        "arena",
+        rr.Boxes3D(centers=[0, 0, -174.6], half_sizes=[914.4, 914.4, 174.6]),
+    )
+    rr.log(
+        "shelter",
+        rr.Boxes3D(centers=[1014.4, 0, -174.6], half_sizes=[100, 100, 174.6]),
+    )
 
 for order, serial in enumerate(cam_ordered):
     # load yaml file
