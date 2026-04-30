@@ -49,7 +49,7 @@ blueprint = rrb.Blueprint(
 )
 
 rr.send_blueprint(blueprint)
-rr.set_time(sequence="stable_time", value=0)
+rr.set_time_sequence("stable_time", 0)
 rr.log("world", rr.ViewCoordinates.RIGHT_HAND_Y_UP, static=True)
 for key, value in gt_pts.items():
     rr.log(key, rr.Points3D(value))
